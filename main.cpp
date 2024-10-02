@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdlib> 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 const int window_width = 800;
 const int window_height = 600;
 
@@ -11,19 +13,60 @@ void initOpenGL() {
         std::cerr << "Erro ao inicializar o GLEW!" << std::endl;
         exit(EXIT_FAILURE);
     }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+
+}
+
+GLuint loadTexture(const char* filePath) {
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
+    if (data) {
+        std::cout << "Imagem carregada: " << filePath << ", Largura: " << width << ", Altura: " << height << ", Canais: " << nrChannels << std::endl;
+        GLenum format;
+        if (nrChannels == 1)
+            format = GL_RED;
+        else if (nrChannels == 3)
+            format = GL_RGB;
+        else if (nrChannels == 4)
+            format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        std::cerr << "Failed to load texture: " << filePath << std::endl;
+    }
+    stbi_image_free(data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return textureID;
 }
 
 struct Bird {
     float x, y;
     float velocity;
-    const float gravity = -0.001f;
-    const float flapStrength = 0.2f;
+    GLuint texture;
+    const float gravity = -0.0001f;
+    const float flapStrength = 0.1f;
 
-    Bird() : x(100.0f), y(300.0f), velocity(0.0f) {}
+    Bird() : x(100.0f), y(300.0f), velocity(0.0f) {
+        texture = loadTexture("C:/Users/ledua/Source/Repos/FlappyBird/pinto.png");
+    }
 
     void reset() {
         x = 100.0f;
@@ -46,15 +89,18 @@ struct Bird {
     }
 
     void draw() const {
-        glColor3f(1.0f, 1.0f, 0.0f);
+        glBindTexture(GL_TEXTURE_2D, texture); 
+        glColor3f(1.0f, 1.0f, 1.0f);  
+
         glBegin(GL_QUADS);
-        glVertex2f(x - 15.0f, y - 15.0f);
-        glVertex2f(x + 15.0f, y - 15.0f);
-        glVertex2f(x + 15.0f, y + 15.0f);
-        glVertex2f(x - 15.0f, y + 15.0f);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(x - 15.0f, y - 15.0f);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(x + 15.0f, y - 15.0f);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(x + 15.0f, y + 15.0f);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(x - 15.0f, y + 15.0f);
         glEnd();
     }
 };
+
 
 struct Pipe {
     float x, height;
@@ -72,25 +118,29 @@ struct Pipe {
         x -= speed;
         if (x < -50.0f) {
             x = 800.0f;
-            height = static_cast<float>(rand() % 300 + 100); 
+            height = static_cast<float>(rand() % 300 + 100);
             passed = false;
         }
     }
 
     void draw() const {
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glBegin(GL_QUADS);
-        glVertex2f(x - 25.0f, 0.0f);
-        glVertex2f(x + 25.0f, 0.0f);
-        glVertex2f(x + 25.0f, height);
-        glVertex2f(x - 25.0f, height);
+        glColor3f(0.0f, 1.0f, 0.0f); 
 
-        glVertex2f(x - 25.0f, 600.0f);
-        glVertex2f(x + 25.0f, 600.0f);
-        glVertex2f(x + 25.0f, height + 200.0f);
-        glVertex2f(x - 25.0f, height + 200.0f);
+        glBegin(GL_QUADS);
+        glVertex2f(x - 25.0f, 0.0f);     
+        glVertex2f(x + 25.0f, 0.0f);      
+        glVertex2f(x + 25.0f, height);     
+        glVertex2f(x - 25.0f, height);    
+        glEnd();
+
+        glBegin(GL_QUADS);
+        glVertex2f(x - 25.0f, 600.0f);        
+        glVertex2f(x + 25.0f, 600.0f);          
+        glVertex2f(x + 25.0f, height + 200.0f); 
+        glVertex2f(x - 25.0f, height + 200.0f); 
         glEnd();
     }
+
 
     bool isColliding(const Bird& bird) const {
         return (bird.x + 15.0f > x - 25.0f && bird.x - 15.0f < x + 25.0f &&
@@ -120,12 +170,13 @@ int main() {
 
     glfwMakeContextCurrent(window);
     initOpenGL();
+    glEnable(GL_TEXTURE_2D);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    glClearColor(0.5f, 0.7f, 1.0f, 1.0f); 
+    glClearColor(0.5f, 0.7f, 1.0f, 1.0f);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, window_width, 0, window_height, -1, 1);  
+    glOrtho(0, window_width, 0, window_height, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -139,12 +190,12 @@ int main() {
         if (!gameOver) {
             bird.update();
             for (auto& pipe : pipes) {
-                pipe.update(0.2f);
+                pipe.update(0.05f);
                 if (pipe.isColliding(bird)) {
                     gameOver = true;
                 }
             }
-            
+
             if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                 bird.flap();
             }
@@ -156,11 +207,15 @@ int main() {
             }
         }
 
-        bird.draw();
+        glDisable(GL_TEXTURE_2D);
+
+
         for (const auto& pipe : pipes) {
             pipe.draw();
         }
 
+        glEnable(GL_TEXTURE_2D);
+        bird.draw();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

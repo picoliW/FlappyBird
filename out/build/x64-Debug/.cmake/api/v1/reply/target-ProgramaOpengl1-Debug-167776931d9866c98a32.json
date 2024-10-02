@@ -66,15 +66,15 @@
 			[
 				{
 					"backtrace" : 4,
-					"path" : "C:/Users/Aluno/Desktop/ProgramaOpengl1_v4/deps/glm"
+					"path" : "C:/Users/ledua/source/repos/FlappyBird/deps/glm"
 				},
 				{
 					"backtrace" : 4,
-					"path" : "C:/Users/Aluno/Desktop/ProgramaOpengl1_v4/deps/glfw/include"
+					"path" : "C:/Users/ledua/source/repos/FlappyBird/deps/glfw/include"
 				},
 				{
 					"backtrace" : 4,
-					"path" : "C:/Users/Aluno/Desktop/ProgramaOpengl1_v4/deps/glew/include"
+					"path" : "C:/Users/ledua/source/repos/FlappyBird/deps/glew/include"
 				}
 			],
 			"language" : "CXX",
@@ -99,12 +99,12 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-LIBPATH:C:\\Users\\Aluno\\Desktop\\ProgramaOpengl1_v4\\deps\\glfw\\lib-vc2019",
+				"fragment" : "-LIBPATH:C:\\Users\\ledua\\source\\repos\\FlappyBird\\deps\\glfw\\lib-vc2019",
 				"role" : "libraryPath"
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-LIBPATH:C:\\Users\\Aluno\\Desktop\\ProgramaOpengl1_v4\\deps\\glew\\lib\\Release\\x64",
+				"fragment" : "-LIBPATH:C:\\Users\\ledua\\source\\repos\\FlappyBird\\deps\\glew\\lib\\Release\\x64",
 				"role" : "libraryPath"
 			},
 			{
